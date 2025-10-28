@@ -252,7 +252,7 @@ class StringHTMLTransformerApp {
 
         // Add indicator that we're in string mode
         const title = document.querySelector('h1');
-        title.textContent = 'AZ HTML Transformer';
+        title.textContent = 'AZ HTML Configuration Tool';
     }
 
     /**
@@ -447,7 +447,7 @@ class StringHTMLTransformerApp {
     validateConfiguration(config) {
         // Check if target type is enabled for other transformations
         if ((config.enableBrowser || config.enableUnsubscribe || config.enablePersonalization) && !config.enableTarget) {
-            NotificationUtils.show('Target type must be selected for transformations', 'error');
+            NotificationUtils.show('Target type must be selected for Configuring', 'error');
             return false;
         }
 
@@ -455,7 +455,7 @@ class StringHTMLTransformerApp {
         const hasTransformation = config.enableBrowser || config.enableUnsubscribe || config.enablePersonalization;
 
         if (!hasTransformation) {
-            NotificationUtils.show('Please select at least one transformation option', 'error');
+            NotificationUtils.show('Please select at least one configuration option', 'error');
             return false;
         }
 
@@ -580,7 +580,7 @@ class StringHTMLTransformerApp {
      */
     hideProcessingState() {
         const applyBtn = document.getElementById('apply-btn');
-        applyBtn.innerHTML = 'Apply Transformations';
+        applyBtn.innerHTML = 'Configuration options';
         this.updateApplyButton();
     }
 
