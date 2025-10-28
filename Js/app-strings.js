@@ -1,9 +1,9 @@
-// Main application controller for HTML Transformer
+// String-based HTML Transformer Application
 
 /**
- * Application state
+ * String-based Application state
  */
-const AppState = {
+const StringAppState = {
     originalHtmlContent: null,
     modifiedHtmlContent: null,
     uploadedFile: null,
@@ -13,9 +13,9 @@ const AppState = {
 };
 
 /**
- * Main application class
+ * String-based HTML Transformer App
  */
-class HTMLTransformerApp {
+class StringHTMLTransformerApp {
     constructor() {
         this.initializeEventListeners();
         this.initializeUI();
@@ -100,10 +100,10 @@ class HTMLTransformerApp {
             const content = await FileUtils.readFileAsText(file);
 
             // Store in app state
-            AppState.originalHtmlContent = content;
-            AppState.modifiedHtmlContent = content;
-            AppState.uploadedFile = file;
-            AppState.undoStack = [];
+            StringAppState.originalHtmlContent = content;
+            StringAppState.modifiedHtmlContent = content;
+            StringAppState.uploadedFile = file;
+            StringAppState.undoStack = [];
 
             // Show file info
             this.showFileInfo(file);
@@ -195,7 +195,7 @@ class HTMLTransformerApp {
     setupActionButtons() {
         // Apply transformations
         document.getElementById('apply-btn').addEventListener('click', () => {
-            this.applyTransformations();
+            this.applyStringTransformations();
         });
 
         // Reset all configurations
@@ -249,6 +249,10 @@ class HTMLTransformerApp {
 
         // Disable apply button initially
         document.getElementById('apply-btn').disabled = true;
+
+        // Add indicator that we're in string mode
+        const title = document.querySelector('h1');
+        title.textContent = 'AZ HTML Transformer';
     }
 
     /**
@@ -310,7 +314,7 @@ class HTMLTransformerApp {
             includeLastname: document.getElementById('include-lastname').checked
         };
 
-        AppState.currentConfig = config;
+        StringAppState.currentConfig = config;
 
         // Enable/disable apply button based on configuration
         this.updateApplyButton();
@@ -337,7 +341,7 @@ class HTMLTransformerApp {
      * Update apply button state
      */
     updateApplyButton() {
-        const config = AppState.currentConfig;
+        const config = StringAppState.currentConfig;
         const applyBtn = document.getElementById('apply-btn');
 
         // Check if at least one transformation is selected
@@ -348,88 +352,92 @@ class HTMLTransformerApp {
                 (config.includeTitle || config.includeFirstname || config.includeLastname))
         );
 
-        applyBtn.disabled = !hasSelection || AppState.isProcessing;
+        applyBtn.disabled = !hasSelection || StringAppState.isProcessing;
     }
 
-    // /**
-    //  * Apply transformations
-    //  */
-    // async applyTransformations() {
-    //     if (AppState.isProcessing) return;
+    /**
+     * Apply string-based transformations
+     */
+    async applyStringTransformations() {
+        if (StringAppState.isProcessing) return;
 
-    //     const config = AppState.currentConfig;
+        const config = StringAppState.currentConfig;
 
-    //     // Validate configuration
-    //     if (!this.validateConfiguration(config)) {
-    //         return;
-    //     }
+        // Validate configuration
+        if (!this.validateConfiguration(config)) {
+            return;
+        }
 
-    //     AppState.isProcessing = true;
-    //     this.showProcessingState();
-
-    //     try {
-    //         // Save current state to undo stack
-    //         AppState.undoStack.push({
-    //             html: AppState.modifiedHtmlContent,
-    //             config: { ...config }
-    //         });
-
-    //         // Apply transformations
-    //         const result = Transforms.applyTransformations(AppState.modifiedHtmlContent, config);
-
-    //         if (result.success) {
-    //             // Update modified content
-    //             AppState.modifiedHtmlContent = result.html;
-
-    //             // Update preview
-    //             this.updatePreview();
-
-    //             // Show undo button
-    //             document.getElementById('undo-btn').classList.remove('hidden');
-
-    //             // Show result messages
-    //             result.messages.forEach(message => {
-    //                 NotificationUtils.show(message.text, message.type);
-    //             });
-
-    //             NotificationUtils.show('Transformations applied successfully', 'success');
-    //         } else {
-    //             // Show error messages
-    //             result.messages.forEach(message => {
-    //                 NotificationUtils.show(message.text, message.type);
-    //             });
-    //         }
-
-    //     } catch (error) {
-    //         NotificationUtils.show('Failed to apply transformations: ' + error.message, 'error');
-    //     } finally {
-    //         AppState.isProcessing = false;
-    //         this.hideProcessingState();
-    //     }
-    // }
-
-    // TEMPORARY: Test string method only
-    async applyTransformations() {
-        // ... existing validation code ...
+        StringAppState.isProcessing = true;
+        this.showProcessingState();
 
         try {
-            // TEST: Use string method for browser version
-            const result = StringTransforms.transformBrowserVersion(AppState.modifiedHtmlContent);
+            // Save current state to undo stack
+            StringAppState.undoStack.push({
+                html: StringAppState.modifiedHtmlContent,
+                config: {
+                    ...config
+                }
+            });
 
-            if (result.success) {
-                AppState.modifiedHtmlContent = result.html;
-                this.updatePreview();
+            let modifiedHTML = StringAppState.modifiedHtmlContent;
+            const allResults = {
+                success: true,
+                messages: [],
+                changes: []
+            };
 
-                // Show results
-                result.messages.forEach(message => {
-                    NotificationUtils.show(message.text, message.type);
-                });
+            // Apply browser version transformation
+            if (config.enableTarget && config.enableBrowser) {
+                console.log('Applying browser version transformation...');
+                const result = StringTransforms.transformBrowserVersion(modifiedHTML);
+                modifiedHTML = result.html;
+                allResults.messages.push(...result.messages);
+                allResults.changes.push(...result.changes);
+            }
 
-                console.log('String method results:', result); // DEBUG
+            // Apply unsubscribe transformation
+            if (config.enableTarget && config.enableUnsubscribe) {
+                console.log(`Applying ${config.targetType} unsubscribe transformation...`);
+                const result = StringTransforms.transformUnsubscribe(modifiedHTML, config);
+                modifiedHTML = result.html;
+                allResults.messages.push(...result.messages);
+                allResults.changes.push(...result.changes);
+            }
+
+            // Apply personalization transformation
+            if (config.enableTarget && config.enablePersonalization) {
+                console.log('Applying personalization transformation...');
+                const result = StringTransforms.transformPersonalization(modifiedHTML, config);
+                modifiedHTML = result.html;
+                allResults.messages.push(...result.messages);
+                allResults.changes.push(...result.changes);
+            }
+
+            // Update modified content
+            StringAppState.modifiedHtmlContent = modifiedHTML;
+
+            // Update preview
+            this.updatePreview();
+
+            // Show undo button
+            document.getElementById('undo-btn').classList.remove('hidden');
+
+            // Show result messages
+            allResults.messages.forEach(message => {
+                NotificationUtils.show(message.text, message.type);
+            });
+
+            if (allResults.messages.length > 0) {
+                NotificationUtils.show('Transformations completed!', 'success');
             }
 
         } catch (error) {
-            NotificationUtils.show('Failed: ' + error.message, 'error');
+            NotificationUtils.show('Failed to apply transformations: ' + error.message, 'error');
+            console.error('String transformation error:', error);
+        } finally {
+            StringAppState.isProcessing = false;
+            this.hideProcessingState();
         }
     }
 
@@ -487,9 +495,9 @@ class HTMLTransformerApp {
         document.getElementById('include-lastname').checked = false;
 
         // Reset modified content to original
-        if (AppState.originalHtmlContent) {
-            AppState.modifiedHtmlContent = AppState.originalHtmlContent;
-            AppState.undoStack = [];
+        if (StringAppState.originalHtmlContent) {
+            StringAppState.modifiedHtmlContent = StringAppState.originalHtmlContent;
+            StringAppState.undoStack = [];
             this.updatePreview();
             document.getElementById('undo-btn').classList.add('hidden');
         }
@@ -504,20 +512,20 @@ class HTMLTransformerApp {
      * Undo last changes
      */
     undoChanges() {
-        if (AppState.undoStack.length === 0) {
+        if (StringAppState.undoStack.length === 0) {
             NotificationUtils.show('Nothing to undo', 'info');
             return;
         }
 
         // Restore previous state
-        const previousState = AppState.undoStack.pop();
-        AppState.modifiedHtmlContent = previousState.html;
+        const previousState = StringAppState.undoStack.pop();
+        StringAppState.modifiedHtmlContent = previousState.html;
 
         // Update preview
         this.updatePreview();
 
         // Hide undo button if no more undo states
-        if (AppState.undoStack.length === 0) {
+        if (StringAppState.undoStack.length === 0) {
             document.getElementById('undo-btn').classList.add('hidden');
         }
 
@@ -531,12 +539,12 @@ class HTMLTransformerApp {
         const originalPreview = document.getElementById('original-preview');
         const modifiedPreview = document.getElementById('modified-preview');
 
-        if (AppState.originalHtmlContent) {
-            originalPreview.srcdoc = AppState.originalHtmlContent;
+        if (StringAppState.originalHtmlContent) {
+            originalPreview.srcdoc = StringAppState.originalHtmlContent;
         }
 
-        if (AppState.modifiedHtmlContent) {
-            modifiedPreview.srcdoc = AppState.modifiedHtmlContent;
+        if (StringAppState.modifiedHtmlContent) {
+            modifiedPreview.srcdoc = StringAppState.modifiedHtmlContent;
         }
     }
 
@@ -562,7 +570,7 @@ class HTMLTransformerApp {
         applyBtn.innerHTML = `
             <div class="flex items-center">
                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Processing...
+                Processing (String)...
             </div>
         `;
     }
@@ -580,16 +588,16 @@ class HTMLTransformerApp {
      * Download transformed HTML
      */
     downloadHTML() {
-        if (!AppState.modifiedHtmlContent) {
+        if (!StringAppState.modifiedHtmlContent) {
             NotificationUtils.show('No content to download', 'error');
             return;
         }
 
         try {
-            const originalName = AppState.uploadedFile ? AppState.uploadedFile.name : 'transformed.html';
-            const fileName = originalName.replace(/\.(html|htm)$/i, '_transformed.$1');
+            const originalName = StringAppState.uploadedFile ? StringAppState.uploadedFile.name : 'transformed.html';
+            const fileName = originalName.replace(/\.(html|htm)$/i, '_string_transformed.$1');
 
-            DownloadUtils.downloadHTML(AppState.modifiedHtmlContent, fileName);
+            DownloadUtils.downloadHTML(StringAppState.modifiedHtmlContent, fileName);
             NotificationUtils.show('File downloaded successfully', 'success');
 
         } catch (error) {
@@ -604,8 +612,8 @@ class HTMLTransformerApp {
         const presetName = prompt('Enter preset name:');
         if (!presetName) return;
 
-        const config = AppState.currentConfig;
-        const success = StorageUtils.savePreset(presetName, config);
+        const config = StringAppState.currentConfig;
+        const success = StorageUtils.savePreset(presetName + '_string', config);
 
         if (success) {
             NotificationUtils.show(`Preset "${presetName}" saved`, 'success');
@@ -619,18 +627,19 @@ class HTMLTransformerApp {
      */
     loadPreset() {
         const presets = StorageUtils.getPresets();
-        const presetNames = Object.keys(presets);
+        const stringPresets = Object.keys(presets).filter(name => name.endsWith('_string'));
 
-        if (presetNames.length === 0) {
+        if (stringPresets.length === 0) {
             NotificationUtils.show('No presets available', 'info');
             return;
         }
 
-        // Simple preset selection (in a real app, you might want a modal)
-        const presetName = prompt(`Available presets:\n${presetNames.join('\n')}\n\nEnter preset name to load:`);
+        const presetName = prompt(`Available presets:\n${stringPresets.join('\n')}\n\nEnter preset name to load:`);
         if (!presetName) return;
 
-        const preset = StorageUtils.loadPreset(presetName);
+        const fullPresetName = presetName.endsWith('_string') ? presetName : presetName + '_string';
+        const preset = StorageUtils.loadPreset(fullPresetName);
+
         if (preset) {
             this.applyConfigurationFromPreset(preset);
             NotificationUtils.show(`Preset "${presetName}" loaded`, 'success');
@@ -668,7 +677,7 @@ class HTMLTransformerApp {
     }
 }
 
-// Initialize the application when DOM is loaded
+// Initialize the string-based application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new HTMLTransformerApp();
+    new StringHTMLTransformerApp();
 });
